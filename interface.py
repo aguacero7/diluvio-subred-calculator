@@ -1,8 +1,6 @@
 import customtkinter as ctk
-import tkinter as tk
 from tkinter import ttk
 from core import Network
-import math
 
 class NetworkApp(ctk.CTk):
     def __init__(self, *args, **kwargs):
@@ -52,11 +50,11 @@ class NetworkApp(ctk.CTk):
         self.generate_button = ctk.CTkButton(self.show_subnets_frame, text="Generate Subnets", command=self.generate_subnets)
         self.generate_button.pack(pady=20)  # Increase pady
 
-        # Frame to hold the table and scrollbar
+        # Frame to hold the main subnet table and scrollbar
         self.table_frame = ctk.CTkFrame(self.show_subnets_frame)
         self.table_frame.pack(expand=True, fill="both", padx=20, pady=(0, 20))  # Increase padx and pady
 
-        # Table to display subnets
+        # Main Table to display subnets
         self.subnets_table = ttk.Treeview(self.table_frame, columns=("Subnet Address", "Broadcast Address", "Subnet Mask"))
         self.subnets_table.heading("#0", text="Index", anchor="center")  # Center the index column
         self.subnets_table.heading("Subnet Address", text="Subnet Address")
@@ -69,13 +67,42 @@ class NetworkApp(ctk.CTk):
         self.subnets_table.column("Broadcast Address", width=200)  # Increase the width of Broadcast Address column
         self.subnets_table.column("Subnet Mask", width=200)  # Increase the width of Subnet Mask column
 
-        # Scrollbar
+        # Scrollbar for the main subnet table
         self.scrollbar = ttk.Scrollbar(self.table_frame, orient="vertical", command=self.subnets_table.yview)
         self.subnets_table.configure(yscrollcommand=self.scrollbar.set)
         self.scrollbar.pack(side="right", fill="y")
         self.subnets_table.pack(side="left", fill="both", expand=True)
 
         self.show_subnets_frame.pack()
+
+        # Frame to hold the detailed subnet information
+        self.detail_frame = ctk.CTkFrame(self.show_subnets_frame)
+        self.detail_frame.pack(expand=True, fill="both", padx=20, pady=(0, 20))  # Increase padx and pady
+
+        # Label for the detailed subnet information
+        self.detail_label = ctk.CTkLabel(self.detail_frame, text="Selected Subnet Details:", wraplength=800)
+        self.detail_label.pack(pady=(20, 0))  # Increase pady
+
+        # Detailed Subnet Table
+        self.detail_table = ttk.Treeview(self.detail_frame, columns=("Attribute", "Value"))
+        self.detail_table.heading("#0", text="Attribute", anchor="center")
+        self.detail_table.heading("Attribute", text="Attribute")
+        self.detail_table.heading("Value", text="Value")
+
+        # Resize columns
+        self.detail_table.column("#0", width=200)
+        self.detail_table.column("Attribute", width=200)
+        self.detail_table.column("Value", width=200)
+
+        self.detail_table.pack(side="left", fill="both", expand=True)
+
+        # Scrollbar for the detailed subnet table
+        self.detail_scrollbar = ttk.Scrollbar(self.detail_frame, orient="vertical", command=self.detail_table.yview)
+        self.detail_table.configure(yscrollcommand=self.detail_scrollbar.set)
+        self.detail_scrollbar.pack(side="right", fill="y")
+
+        # Handle event when item is selected in the main subnet table
+        self.subnets_table.bind("<ButtonRelease-1>", self.show_subnet_details)
 
     def show_network_info(self):
         net_address = self.net_entry.get()
@@ -115,6 +142,24 @@ class NetworkApp(ctk.CTk):
         # Delete all items in the treeview
         for item in self.subnets_table.get_children():
             self.subnets_table.delete(item)
+
+    def show_subnet_details(self, event):
+        item = self.subnets_table.selection()[0]
+        subnet = self.subnets_table.item(item)
+
+        # Clear existing details
+        for child in self.detail_table.get_children():
+            self.detail_table.delete(child)
+
+        # Add new details
+        details = [
+            ("Subnet Address", subnet["values"][0]),
+            ("Broadcast Address", subnet["values"][1]),
+            ("Subnet Mask", subnet["values"][2])
+        ]
+
+        for attr, value in details:
+            self.detail_table.insert("", "end", text=attr, values=(attr, value))
 
 
 if __name__ == "__main__":

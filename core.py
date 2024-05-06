@@ -30,11 +30,9 @@ def net_to_bits(net):
     return "".join(salida)
 
 def bits_to_net(str_bits):
-    list=[]
-    for i in range(0,4):
-            list.append(str_bits[:7])
-            str_bits=str_bits[8:]
-    return ".".join(list)
+    octets = [str_bits[i:i+8] for i in range(0, len(str_bits), 8)]
+    return ".".join(str(int(octet, 2)) for octet in octets)
+
 
 class Network:
     def __init__(self, net, cidr):
@@ -68,13 +66,14 @@ class Network:
         if new_cidr > 32:
             return []
 
-        subnet_mask = cidr_to_mask(new_cidr)
         subnet_size = 2 ** (32 - new_cidr)
+        num_subnets = 2 ** (new_cidr - self.mask_cidr)
 
         # Generate subnets
-        for i in range(x):
-            subnet_addr = self.network_addr_bits + format(i * subnet_size, '032b')[self.mask_cidr:new_cidr]
-            subnet = Network(bits_to_net(subnet_addr), str(new_cidr))
+        for i in range(num_subnets):
+            subnet_addr_bits = self.network_addr_bits[:self.mask_cidr] + format(i * subnet_size, '0' + str(new_cidr - self.mask_cidr) + 'b')
+            subnet = Network(bits_to_net(subnet_addr_bits), str(new_cidr))
             subnets.append(subnet)
 
         return subnets
+
