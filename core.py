@@ -1,19 +1,18 @@
 import math
 
-def cidr_to_mask(cidr):
-    liste = []
-    sortie = ""
-    cidr = int(cidr)
-    if cidr == 32:
-        return "255.255.255.255"
-    while cidr >= 8:
-        cidr -= 8
-        liste.append(8)
-    liste.append(cidr)
-    for i in liste:
-        sortie += str(256 - 2**(8 - i)) + "."
-    sortie = sortie[:-1]
-    return sortie
+def cidr_to_mask(cidr_):
+    cidr=int(cidr_)
+    if not 0 <= cidr <= 32:
+        raise ValueError("CIDR must be between 0 and 32")
+
+    octets = [0, 0, 0, 0]
+    for i in range(cidr // 8):
+        octets[i] = 255
+    if cidr % 8 != 0:
+        octets[cidr // 8] = 256 - 2 ** (8 - (cidr % 8))
+
+    return ".".join(map(str, octets))
+
 
 def mask_to_cidr(mask):
     numbers = mask.split(".")
@@ -31,11 +30,9 @@ def net_to_bits(net):
     return "".join(salida)
 
 def bits_to_net(str_bits):
-    list=[]
-    for i in range(0,4):
-            list.append(str_bits[:7])
-            str_bits=str_bits[8:]
-    return "".join(list)
+    octets = [str_bits[i:i+8] for i in range(0, len(str_bits), 8)]
+    return ".".join(str(int(octet, 2)) for octet in octets)
+
 
 class Network:
     def __init__(self, net, cidr):
@@ -44,11 +41,21 @@ class Network:
         self.mask = cidr_to_mask(cidr)
         self.mask_bits = net_to_bits(self.mask)
         self.net_bits = net_to_bits(net)
-        self.nb_of_hosts = 2**(32-int(cidr))
+        self.nb_of_hosts = 2**(32-int(cidr))-2
         self.broadcast_bits = "".join([self.net_bits[i] if i < self.mask_cidr else '1' for i in range(32)])
         self.broadcast = bits_to_net(self.broadcast_bits)
         self.network_addr_bits = "".join([self.net_bits[i] if i < self.mask_cidr else '0' for i in range(32)])
         self.network_addr = bits_to_net(self.network_addr_bits)
+
+    @staticmethod
+    def validate_ip(ip):
+        octets = ip.split(".")
+        if len(octets) != 4:
+            return False
+        for octet in octets:
+            if not octet.isdigit() or not 0 <= int(octet) <= 255:
+                return False
+        return True
 
     def subnet_in_x_net(self, x):
         if x <= 0:
@@ -59,13 +66,14 @@ class Network:
         if new_cidr > 32:
             return []
 
-        subnet_mask = cidr_to_mask(new_cidr)
         subnet_size = 2 ** (32 - new_cidr)
+        num_subnets = 2 ** (new_cidr - self.mask_cidr)
 
         # Generate subnets
-        for i in range(x):
-            subnet_addr = self.network_addr_bits + format(i * subnet_size, '032b')[self.mask_cidr:new_cidr]
-            subnet = Network(bits_to_net(subnet_addr), str(new_cidr))
+        for i in range(num_subnets):
+            subnet_addr_bits = self.network_addr_bits[:self.mask_cidr] + format(i * subnet_size, '0' + str(new_cidr - self.mask_cidr) + 'b')
+            subnet = Network(bits_to_net(subnet_addr_bits), str(new_cidr))
             subnets.append(subnet)
 
         return subnets
+
