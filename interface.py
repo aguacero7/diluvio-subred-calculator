@@ -1,6 +1,7 @@
 import customtkinter as ctk
 from tkinter import ttk
 from core import Network
+from CTkMessagebox import CTkMessagebox
 
 class NetworkApp(ctk.CTk):
     def __init__(self, *args, **kwargs):
@@ -109,34 +110,44 @@ class NetworkApp(ctk.CTk):
         cidr = self.cidr_entry.get()
 
         if net_address and cidr:
-            network = Network(net_address, cidr)
-
-            info = f"Network Address: {network.network_addr}\n"
-            info += f"Broadcast Address: {network.broadcast}\n"
-            info += f"Subnet Mask: {network.mask}\n"
-            info += f"Number of Hosts: {network.nb_of_hosts}\n"
-            self.network_info_label.configure(text=info)
-            self.clear_subnets_table()  # Clear subnets table when showing network info
+            if(Network.is_valid_cidr(cidr) and Network.is_valid_ipv4(net_address)):
+                try:
+                    network = Network(net_address, cidr)
+                    self.net_entry.delete(0, ctk.END)
+                    self.net_entry.insert(0, network.network_addr)
+                    info = f"Network Address: {network.network_addr}\n"
+                    info += f"Broadcast Address: {network.broadcast}\n"
+                    info += f"Subnet Mask: {network.mask}\n"
+                    info += f"Number of Hosts: {network.nb_of_hosts}\n"
+                    self.network_info_label.configure(text=info)
+                    self.clear_subnets_table()  # Clear subnets table when showing network info
+                except ValueError as e:
+                    CTkMessagebox(title="Error", message=str(e), icon="warning")
+            else:
+                CTkMessagebox(title="Error", message="Please enter a valid network address and CIDR.", icon="cancel")
         else:
-            ctk.messagebox.showerror("Error", "Please enter network address and CIDR.")
+            CTkMessagebox(title="Error", message="Please enter network address and CIDR.", icon="warning")
+
 
     def generate_subnets(self):
         num_subnets = self.num_subnets_entry.get()
-
         if num_subnets.isdigit():
             num_subnets = int(num_subnets)
             if num_subnets > 0:
                 self.clear_subnets_table()
                 network = Network(self.net_entry.get(), self.cidr_entry.get())
-                subnets = network.subnet_in_x_net(num_subnets)
+                if(num_subnets>network.nb_of_hosts):
+                    CTkMessagebox(title="Error", message="Please enter a littler amount of hosts",icon="cancel")
+                else:
+                    subnets = network.subnet_in_x_net(num_subnets)
 
-                # Populate table with subnet information
-                for i, subnet in enumerate(subnets):
-                    self.subnets_table.insert("", "end", text=f"{i+1}", values=(subnet.network_addr, subnet.broadcast, subnet.mask))
+                    # Populate table with subnet information
+                    for i, subnet in enumerate(subnets):
+                        self.subnets_table.insert("", "end", text=f"{i+1}", values=(subnet.network_addr, subnet.broadcast, subnet.mask))
             else:
-                ctk.messagebox.showerror("Error", "Please enter a positive number of subnets.")
+                CTkMessagebox(title="Error", message="Please enter a positive number of subnets.",icon="cancel")
         else:
-            ctk.messagebox.showerror("Error", "Please enter a valid number.")
+            CTkMessagebox(title="Error", message="Please enter a valid number.",icon="cancel")
 
     def clear_subnets_table(self):
         # Delete all items in the treeview
