@@ -1,5 +1,5 @@
 import math
-
+import re
 def cidr_to_mask(cidr_):
     cidr=int(cidr_)
     if not 0 <= cidr <= 32:
@@ -47,16 +47,17 @@ class Network:
         self.network_addr_bits = "".join([self.net_bits[i] if i < self.mask_cidr else '0' for i in range(32)])
         self.network_addr = bits_to_net(self.network_addr_bits)
 
-    @staticmethod
-    def validate_ip(ip):
-        octets = ip.split(".")
-        if len(octets) != 4:
-            return False
-        for octet in octets:
-            if not octet.isdigit() or not 0 <= int(octet) <= 255:
-                return False
-        return True
+    def is_valid_ipv4(ip):
+        pattern = re.compile(r'^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
+                            r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
+                            r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.'
+                            r'(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$')
+        return pattern.match(ip)
 
+    def is_valid_cidr(cidr):
+        pattern = re.compile(r'^(\d{1,2}|1\d{2}|2[0-4]\d|25[0-5])$')
+        return pattern.match(cidr) and int(cidr) <= 32 
+    
     def subnet_in_x_net(self, x):
         if x <= 0:
             return []
