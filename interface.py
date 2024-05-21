@@ -13,6 +13,8 @@ class NetworkApp(ctk.CTk):
         self.tabview = ctk.CTkTabview(self)
         self.tabview.pack(padx=40, pady=40, fill="both", expand=True)  # Increase padx and pady
 
+        self.cool = ctk.CTkFont(family='roboto', size=20)
+
         # Configure Network tab
         self.configure_network_tab = self.tabview.add("Configure Network")
         self.configure_network_frame = ctk.CTkFrame(self.configure_network_tab)
@@ -29,8 +31,12 @@ class NetworkApp(ctk.CTk):
         self.configure_button = ctk.CTkButton(self.configure_network_frame, text="Configure", command=self.show_network_info)
         self.configure_button.grid(row=2, columnspan=2, pady=20)  # Increase pady
 
+
         self.network_info_label = ctk.CTkLabel(self.configure_network_frame, text="", wraplength=800)  # Increase wraplength
         self.network_info_label.grid(row=3, columnspan=2, padx=10, pady=20)  # Increase padx and pady
+
+        self.initial_address_label = ctk.CTkLabel(self.configure_network_frame, text="", wraplength=800,font=self.cool)  # Increase wraplength
+        self.initial_address_label.grid(row=4, columnspan=2, padx=10, pady=20)  # Increase padx and pady
 
         self.configure_network_frame.pack()
 
@@ -119,7 +125,9 @@ class NetworkApp(ctk.CTk):
                     info += f"Broadcast Address: {network.broadcast}\n"
                     info += f"Subnet Mask: {network.mask}\n"
                     info += f"Number of Hosts: {network.nb_of_hosts}\n"
+                    initialIP=f"Initial inputed IP @: {network.net}"
                     self.network_info_label.configure(text=info)
+                    self.initial_address_label.configure(text=initialIP)
                     self.clear_subnets_table()  # Clear subnets table when showing network info
                 except ValueError as e:
                     CTkMessagebox(title="Error", message=str(e), icon="warning")
