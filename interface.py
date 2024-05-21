@@ -7,7 +7,7 @@ class NetworkApp(ctk.CTk):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.title("Diluvio Subnet Calculator")
-        self.geometry("1000x600")  # Larger window size
+        self.geometry("600x600")  # Larger window size
 
         # Create a tabview
         self.tabview = ctk.CTkTabview(self)
@@ -34,9 +34,6 @@ class NetworkApp(ctk.CTk):
 
         self.network_info_label = ctk.CTkLabel(self.configure_network_frame, text="", wraplength=800)  # Increase wraplength
         self.network_info_label.grid(row=3, columnspan=2, padx=10, pady=20)  # Increase padx and pady
-
-        self.initial_address_label = ctk.CTkLabel(self.configure_network_frame, text="", wraplength=800,font=self.cool)  # Increase wraplength
-        self.initial_address_label.grid(row=4, columnspan=2, padx=10, pady=20)  # Increase padx and pady
 
         self.configure_network_frame.pack()
 
@@ -119,15 +116,12 @@ class NetworkApp(ctk.CTk):
             if(Network.is_valid_cidr(cidr) and Network.is_valid_ipv4(net_address)):
                 try:
                     network = Network(net_address, cidr)
-                    self.net_entry.delete(0, ctk.END)
-                    self.net_entry.insert(0, network.network_addr)
                     info = f"Network Address: {network.network_addr}\n"
                     info += f"Broadcast Address: {network.broadcast}\n"
                     info += f"Subnet Mask: {network.mask}\n"
                     info += f"Number of Hosts: {network.nb_of_hosts}\n"
                     initialIP=f"Initial inputed IP @: {network.net}"
                     self.network_info_label.configure(text=info)
-                    self.initial_address_label.configure(text=initialIP)
                     self.clear_subnets_table()  # Clear subnets table when showing network info
                 except ValueError as e:
                     CTkMessagebox(title="Error", message=str(e), icon="warning")
